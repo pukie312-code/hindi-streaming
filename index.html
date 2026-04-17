@@ -75,12 +75,23 @@
         }
 
         function play(id, title) {
-            document.getElementById('player-box').style.display = 'block';
-            document.getElementById('playing-title').innerText = "Playing: " + title;
-            // Use vidsrc which is famous for multi-audio support (including Hindi)
-            document.getElementById('video-frame').src = `https://vidsrc.to/embed/movie/${id}`;
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
+    const box = document.getElementById('player-box');
+    const frame = document.getElementById('video-frame');
+    const pTitle = document.getElementById('playing-title');
+
+    box.style.display = 'block';
+    pTitle.innerText = "Watching: " + title;
+
+    // TRY THESE THREE SOURCES IF ONE DOESN'T WORK:
+    // Source 1 (vidsrc.me) - Often better for Hindi/International
+    // Source 2 (vidsrc.pm) - Fast and stable
+    // Source 3 (vidsrc.cc) - Good backup
+    
+    frame.src = `https://vidsrc.me/embed/movie?tmdb=${id}`; 
+
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
 
         function closeVideo() {
             document.getElementById('player-box').style.display = 'none';
