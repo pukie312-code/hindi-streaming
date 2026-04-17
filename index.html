@@ -3,61 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineStream | Global Hindi Dubbed</title>
+    <title>CineHub | Maximum Hindi Servers</title>
     <style>
         body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding: 10px; }
-        .nav { display: flex; gap: 8px; margin-bottom: 20px; }
+        .nav { display: flex; gap: 8px; margin-bottom: 15px; }
         input { flex-grow: 1; padding: 12px; border-radius: 5px; border: 1px solid #333; background: #111; color: #fff; }
         button { padding: 10px 15px; background: #e50914; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        #player-box { display: none; margin-bottom: 20px; border: 1px solid #e50914; background: #000; }
-        .iframe-wrap { position: relative; padding-top: 56.25%; }
+        
+        #player-box { display: none; background: #080808; padding: 10px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e50914; }
+        .iframe-wrap { position: relative; padding-top: 56.25%; width: 100%; background: #111; }
         iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-        .card { background: #111; border-radius: 5px; cursor: pointer; border: 1px solid #222; text-align: center; position: relative; overflow: hidden; }
+        
+        /* Server Switcher Panel */
+        .server-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; margin-top: 15px; }
+        .srv-btn { background: #222; border: 1px solid #444; color: #ccc; font-size: 11px; padding: 10px; border-radius: 4px; text-align: center; }
+        .srv-btn.active { background: #e50914; color: #fff; border-color: #ff0000; }
+        .dub-tag { background: #ffcc00; color: #000; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+        .card { background: #111; border-radius: 8px; cursor: pointer; border: 1px solid #222; overflow: hidden; position: relative; transition: 0.3s; }
+        .card:hover { border-color: #e50914; }
         .card img { width: 100%; height: 200px; object-fit: cover; }
-        .card p { font-size: 11px; padding: 8px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .tag { position: absolute; top: 5px; right: 5px; background: #e50914; font-size: 9px; padding: 2px 5px; border-radius: 3px; font-weight: bold; }
+        .card p { font-size: 12px; padding: 8px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     </style>
 </head>
 <body>
 
     <div class="nav">
-        <input type="text" id="query" placeholder="Search (e.g. Avengers, K-Drama)...">
+        <input type="text" id="query" placeholder="Search Dubbed (e.g. Marvel, K-Drama)...">
         <button onclick="search()">Search</button>
         <button style="background:#333" onclick="loadHome()">Home</button>
     </div>
 
     <div id="player-box">
-        <div style="display:flex; justify-content:space-between; padding:8px; align-items: center;">
-            <span id="p-title" style="font-size: 14px; font-weight: bold;">Loading...</span>
-            <button onclick="closeVideo()" style="background:#444; padding: 5px 10px;">X Close</button>
+        <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:10px;">
+            <div id="p-title" style="font-weight: bold;">Loading...</div>
+            <button onclick="closeVideo()" style="background:none; color:red; font-size:24px;">×</button>
         </div>
+        
         <div class="iframe-wrap">
             <iframe id="v-frame" src="" allowfullscreen></iframe>
         </div>
+
+        <div class="server-panel">
+            <button class="srv-btn active" id="s1" onclick="changeServer(1)">Server 1 (Dual Audio)</button>
+            <button class="srv-btn" id="s2" onclick="changeServer(2)">Server 2 (HD-Quality)</button>
+            <button class="srv-btn" id="s3" onclick="changeServer(3)">Server 3 (Stremio-Like)</button>
+            <button class="srv-btn" id="s4" onclick="changeServer(4)">Server 4 (Vidsrc Pro)</button>
+            <button class="srv-btn" id="s5" onclick="changeServer(5)">Server 5 (2Embed)</button>
+            <button class="srv-btn" style="background:#0056b3;" onclick="changeServer(6)">🚀 Fullscreen Mode</button>
+        </div>
+        <p style="font-size: 11px; color: #aaa; margin-top: 10px; text-align: center;">
+            <b>Audio Switch:</b> Click the ⚙️ icon inside player > Audio > Select Hindi.
+        </p>
     </div>
 
-    <div class="grid" id="display">Loading Global Hindi Content...</div>
+    <div class="grid" id="display">Loading Hindi Dubbed...</div>
 
     <script>
-        // 1. PUT YOUR KEY HERE
-        const KEY = '2ceab4da8be54076a608de05a598d634'; 
+        const KEY = '2ceab4da8be54076a608de05a598d634'; // ENTER YOUR KEY HERE
+        let currentIMDB = '';
 
-        // 2. Load Home (Discovery: Popular + Spoken Language Hindi)
         async function loadHome() {
-            const display = document.getElementById('display');
-            display.innerHTML = "Finding Dubbed Movies...";
-            try {
-                // with_spoken_languages=hi ensures it has a Hindi track
-                // sort_by=popularity.desc ensures we get big movies like Avengers
-                const url = `https://api.themoviedb.org/3/discover/movie?api_key=${KEY}&with_spoken_languages=hi&sort_by=popularity.desc&primary_release_year=2024|2025|2026`;
-                const r = await fetch(url);
-                const d = await r.json();
-                render(d.results);
-            } catch (e) { display.innerHTML = "Error loading. Check your API Key."; }
+            // Using Hindi Dubbed Keyword (250227)
+            const r = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${KEY}&with_keywords=250227&sort_by=popularity.desc&language=hi-IN`);
+            const d = await r.json();
+            render(d.results);
         }
 
-        // 3. Search (Global search but with Hindi metadata)
         async function search() {
             const q = document.getElementById('query').value;
             if(!q) return;
@@ -68,30 +81,47 @@
 
         function render(movies) {
             const disp = document.getElementById('display');
-            if(!movies || movies.length === 0) { disp.innerHTML = "Nahi mila. Try again."; return; }
+            if(!movies || movies.length === 0) { disp.innerHTML = "Kuch nahi mila."; return; }
             disp.innerHTML = movies.map(m => `
-                <div class="card" onclick="play('${m.id}', '${m.title.replace(/'/g, "")}')">
-                    <div class="tag">HINDI</div>
-                    <img src="https://image.tmdb.org/t/p/w300${m.poster_path}" onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
+                <div class="card" onclick="openPlayer('${m.id}', '${m.title}')">
+                    <img src="https://image.tmdb.org/t/p/w300${m.poster_path}" onerror="this.src='https://via.placeholder.com/300x450?text=Hindi+Dubbed'">
                     <p>${m.title}</p>
                 </div>
             `).join('');
         }
 
-        async function play(id, title) {
-            const box = document.getElementById('player-box');
-            const frame = document.getElementById('v-frame');
-            box.style.display = 'block';
+        async function openPlayer(id, title) {
+            document.getElementById('player-box').style.display = 'block';
             document.getElementById('p-title').innerText = "Watching: " + title;
             
-            // Fetch IMDb ID for better source matching
             const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${KEY}`);
             const data = await res.json();
-            const imdb = data.imdb_id || id;
+            currentIMDB = data.imdb_id || id;
             
-            // Best Source for Multi-Audio (Hindi included)
-            frame.src = `https://multiembed.mov/?video_id=${imdb}`;
+            changeServer(1);
             window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function changeServer(n) {
+            const frame = document.getElementById('v-frame');
+            document.querySelectorAll('.srv-btn').forEach(b => b.classList.remove('active'));
+            if(n < 6) document.getElementById('s'+n).classList.add('active');
+
+            // 2026 TOP SERVERS FOR HINDI DUBBED
+            const s = {
+                1: `https://embed.su/embed/movie/${currentIMDB}`,
+                2: `https://vidsrc.me/embed/movie?imdb=${currentIMDB}`,
+                3: `https://multiembed.mov/?video_id=${currentIMDB}`,
+                4: `https://vidsrc.pro/embed/movie/${currentIMDB}`,
+                5: `https://www.2embed.cc/embed/${currentIMDB}`,
+                6: `https://embed.su/embed/movie/${currentIMDB}`
+            };
+
+            if(n === 6) {
+                window.open(s[6], '_blank'); // Opens in new tab to fix "Refused to connect"
+            } else {
+                frame.src = s[n];
+            }
         }
 
         function closeVideo() {
