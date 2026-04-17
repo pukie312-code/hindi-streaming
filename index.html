@@ -1,97 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MovieSite | Simple & Fast</title>
+    <title>Global Hindi Dubbed | CineStream</title>
     <style>
-        /* CSS: Keeping it clean and static */
-        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding: 15px; }
-        
-        .nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        input { flex-grow: 1; padding: 10px; border-radius: 4px; border: 1px solid #333; background: #111; color: #fff; }
-        button { padding: 10px 20px; background: #e50914; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-gray { background: #333; }
-
-        #player-box { display: none; background: #111; padding: 10px; border-radius: 8px; margin-bottom: 20px; }
+        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding: 10px; }
+        .nav { display: flex; gap: 8px; margin-bottom: 15px; }
+        input { flex-grow: 1; padding: 12px; border-radius: 5px; border: 1px solid #333; background: #111; color: #fff; }
+        button { padding: 10px 15px; background: #e50914; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #player-box { display: none; background: #111; padding: 5px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e50914; }
         .iframe-wrapper { position: relative; padding-top: 56.25%; width: 100%; }
         iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-        .card { background: #111; border: 1px solid #222; border-radius: 5px; cursor: pointer; text-align: center; font-size: 13px; }
-        .card img { width: 100%; border-radius: 5px 5px 0 0; display: block; }
-        .card p { padding: 8px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+        .card { background: #111; border-radius: 5px; cursor: pointer; position: relative; border: 1px solid #222; }
+        .card img { width: 100%; border-radius: 5px; display: block; }
+        .dub-badge { position: absolute; top: 5px; right: 5px; background: #e50914; color: #fff; font-size: 9px; padding: 2px 5px; border-radius: 3px; font-weight: bold; }
+        .card p { font-size: 11px; padding: 5px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     </style>
 </head>
 <body>
 
     <div class="nav">
-        <input type="text" id="query" placeholder="Search movie name...">
+        <input type="text" id="query" placeholder="Search (e.g. Avengers, Train to Busan)...">
         <button onclick="search()">Search</button>
-        <button class="btn-gray" onclick="loadTrending()">Home</button>
+        <button style="background:#333" onclick="loadDubbed()">Home</button>
     </div>
 
     <div id="player-box">
-        <div style="display:flex; justify-content: space-between; margin-bottom: 10px;">
-            <span id="playing-title">Playing...</span>
-            <button onclick="closeVideo()" style="padding: 2px 10px;">X Close</button>
+        <div style="display:flex; justify-content: space-between; align-items: center; padding: 5px;">
+            <small id="playing-title">Loading...</small>
+            <button onclick="closeVideo()" style="background:none; color:red; font-size:20px;">×</button>
         </div>
         <div class="iframe-wrapper">
             <iframe id="video-frame" src="" allowfullscreen></iframe>
         </div>
+        <p style="font-size: 10px; color: #aaa; padding: 5px;">Tip: Click the 'Settings' icon in player to ensure Hindi audio is selected.</p>
     </div>
 
     <div class="grid" id="display"></div>
 
     <script>
-        // REPLACE 'YOUR_KEY_HERE' WITH YOUR TMDB API KEY
-        const KEY = '2ceab4da8be54076a608de05a598d634'; 
-        const display = document.getElementById('display');
-        const frame = document.getElementById('video-frame');
-        const box = document.getElementById('player-box');
-        const pTitle = document.getElementById('playing-title');
-
-        // Load Trending movies on startup
-        async function loadTrending() {
-            const r = await fetch(`https://api.themoviedb.org/3/trending/movie/day?api_key=${KEY}`);
+        const KEY = '2ceab4da8be54076a608de05a598d634'; // <--- PUT YOUR KEY HERE
+        
+        // Loads Global Movies that HAVE a Hindi Audio track
+        async function loadDubbed() {
+            const url = `https://api.themoviedb.org/3/discover/movie?api_key=${KEY}&with_spoken_languages=hi&sort_by=popularity.desc&primary_release_year=2024`;
+            const r = await fetch(url);
             const d = await r.json();
             render(d.results);
         }
 
-        // Search movies
         async function search() {
             const q = document.getElementById('query').value;
             if(!q) return;
-            const r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${KEY}&query=${q}`);
+            // Searches globally but prioritizes results in Hindi
+            const r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${KEY}&query=${encodeURIComponent(q)}&language=hi-IN`);
             const d = await r.json();
             render(d.results);
         }
 
-        // Draw the movie cards
         function render(movies) {
-            display.innerHTML = movies.map(m => `
+            if(!movies || movies.length === 0) {
+                document.getElementById('display').innerHTML = "<p>No dubbed version found.</p>";
+                return;
+            }
+            document.getElementById('display').innerHTML = movies.map(m => `
                 <div class="card" onclick="play('${m.id}', '${m.title.replace(/'/g, "")}')">
-                    <img src="https://image.tmdb.org/t/p/w300${m.poster_path}" alt="img">
+                    <div class="dub-badge">HINDI</div>
+                    <img src="https://image.tmdb.org/t/p/w300${m.poster_path}" onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
                     <p>${m.title}</p>
                 </div>
             `).join('');
         }
 
-        // Play video
         function play(id, title) {
-            box.style.display = 'block';
-            pTitle.innerText = "Watching: " + title;
-            frame.src = `https://vidsrc.to/embed/movie/${id}`;
-            window.scrollTo({top: 0});
+            document.getElementById('player-box').style.display = 'block';
+            document.getElementById('playing-title').innerText = "Playing: " + title;
+            // Use vidsrc which is famous for multi-audio support (including Hindi)
+            document.getElementById('video-frame').src = `https://vidsrc.to/embed/movie/${id}`;
+            window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        // Close video
         function closeVideo() {
-            box.style.display = 'none';
-            frame.src = "";
+            document.getElementById('player-box').style.display = 'none';
+            document.getElementById('video-frame').src = "";
         }
 
-        loadTrending();
+        loadDubbed();
     </script>
 </body>
 </html>
