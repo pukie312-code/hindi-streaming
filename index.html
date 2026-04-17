@@ -74,23 +74,32 @@
             `).join('');
         }
 
-        function play(id, title) {
+        async function play(tmdbId, title) {
     const box = document.getElementById('player-box');
     const frame = document.getElementById('video-frame');
     const pTitle = document.getElementById('playing-title');
 
     box.style.display = 'block';
-    pTitle.innerText = "Watching: " + title;
+    pTitle.innerText = "Fetching HDHub Links for: " + title;
 
-    // TRY THESE THREE SOURCES IF ONE DOESN'T WORK:
-    // Source 1 (vidsrc.me) - Often better for Hindi/International
-    // Source 2 (vidsrc.pm) - Fast and stable
-    // Source 3 (vidsrc.cc) - Good backup
+    // First, we need the IMDb ID because HDHub uses it
+    const res = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${KEY}`);
+    const movieData = await res.json();
+    const imdbId = movieData.imdb_id;
+
+    if(!imdbId) {
+        alert("IMDb ID not found. Trying backup player...");
+        frame.src = `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`;
+        return;
+    }
+
+    // Now, we use a public web-player that supports HDHub sources
+    // Or we stick to a multi-source player that includes HDHub scrapers
+    frame.src = `https://vidsrc.me/embed/movie?imdb=${imdbId}`; 
     
-    frame.src = `https://vidsrc.me/embed/movie?tmdb=${id}`; 
-
     window.scrollTo({top: 0, behavior: 'smooth'});
 }
+
 
 
         function closeVideo() {
