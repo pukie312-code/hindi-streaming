@@ -1,60 +1,105 @@
-<script>
-    const KEY = 'YOUR_TMDB_API_KEY'; 
-    const DUBBED_KEYWORD = '250227'; // TMDB's internal ID for Hindi Dubbed movies
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineStream | Global Hindi Dubbed</title>
+    <style>
+        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding: 10px; }
+        .nav { display: flex; gap: 8px; margin-bottom: 20px; }
+        input { flex-grow: 1; padding: 12px; border-radius: 5px; border: 1px solid #333; background: #111; color: #fff; }
+        button { padding: 10px 15px; background: #e50914; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #player-box { display: none; margin-bottom: 20px; border: 1px solid #e50914; background: #000; }
+        .iframe-wrap { position: relative; padding-top: 56.25%; }
+        iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+        .card { background: #111; border-radius: 5px; cursor: pointer; border: 1px solid #222; text-align: center; position: relative; overflow: hidden; }
+        .card img { width: 100%; height: 200px; object-fit: cover; }
+        .card p { font-size: 11px; padding: 8px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tag { position: absolute; top: 5px; right: 5px; background: #e50914; font-size: 9px; padding: 2px 5px; border-radius: 3px; font-weight: bold; }
+    </style>
+</head>
+<body>
 
-    // 1. Home Screen: Shows ONLY Hindi Dubbed Global Movies
-    async function loadHome() {
-        // This 'discover' call specifically asks for movies with the Hindi Dubbed keyword
-        const url = `https://api.themoviedb.org/3/discover/movie?api_key=${KEY}&with_keywords=${DUBBED_KEYWORD}&sort_by=popularity.desc&language=hi-IN`;
-        const r = await fetch(url);
-        const d = await r.json();
-        render(d.results);
-    }
+    <div class="nav">
+        <input type="text" id="query" placeholder="Search (e.g. Avengers, K-Drama)...">
+        <button onclick="search()">Search</button>
+        <button style="background:#333" onclick="loadHome()">Home</button>
+    </div>
 
-    // 2. Search: Specifically looks for Hindi versions
-    async function search() {
-        const q = document.getElementById('query').value;
-        if(!q) return;
-        // Search using the Hindi language locale to find the dubbed metadata
-        const r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${KEY}&query=${encodeURIComponent(q)}&language=hi-IN&include_adult=false`);
-        const d = await r.json();
-        render(d.results);
-    }
+    <div id="player-box">
+        <div style="display:flex; justify-content:space-between; padding:8px; align-items: center;">
+            <span id="p-title" style="font-size: 14px; font-weight: bold;">Loading...</span>
+            <button onclick="closeVideo()" style="background:#444; padding: 5px 10px;">X Close</button>
+        </div>
+        <div class="iframe-wrap">
+            <iframe id="v-frame" src="" allowfullscreen></iframe>
+        </div>
+    </div>
 
-    function render(movies) {
-        const display = document.getElementById('display');
-        display.innerHTML = movies.map(m => `
-            <div class="card" onclick="playMovie('${m.id}', '${m.title}')">
-                <div class="dub-badge">HINDI DUBBED</div>
-                <img src="https://image.tmdb.org/t/p/w300${m.poster_path}" onerror="this.src='https://via.placeholder.com/300x450?text=Hindi+Dubbed'">
-                <p>${m.title}</p>
-            </div>
-        `).join('');
-    }
+    <div class="grid" id="display">Loading Global Hindi Content...</div>
 
-    async function playMovie(id, title) {
-        const box = document.getElementById('player-box');
-        const frame = document.getElementById('video-frame');
-        
-        box.style.display = 'block';
-        document.getElementById('playing-title').innerText = "Loading Dubbed: " + title;
+    <script>
+        // 1. PUT YOUR KEY HERE
+        const KEY = '2ceab4da8be54076a608de05a598d634'; 
 
-        // Fetch the IMDb ID (Crucial for HDHub-style sources)
-        const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${KEY}`);
-        const data = await res.json();
-        const imdb = data.imdb_id;
+        // 2. Load Home (Discovery: Popular + Spoken Language Hindi)
+        async function loadHome() {
+            const display = document.getElementById('display');
+            display.innerHTML = "Finding Dubbed Movies...";
+            try {
+                // with_spoken_languages=hi ensures it has a Hindi track
+                // sort_by=popularity.desc ensures we get big movies like Avengers
+                const url = `https://api.themoviedb.org/3/discover/movie?api_key=${KEY}&with_spoken_languages=hi&sort_by=popularity.desc&primary_release_year=2024|2025|2026`;
+                const r = await fetch(url);
+                const d = await r.json();
+                render(d.results);
+            } catch (e) { display.innerHTML = "Error loading. Check your API Key."; }
+        }
 
-        // Use the 'SuperEmbed' source - it is currently the best for Hindi/English Dual Audio
-        // It automatically searches for the dubbed file if available
-        frame.src = `https://multiembed.mov/?video_id=${imdb || id}`;
+        // 3. Search (Global search but with Hindi metadata)
+        async function search() {
+            const q = document.getElementById('query').value;
+            if(!q) return;
+            const r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${KEY}&query=${encodeURIComponent(q)}&language=hi-IN`);
+            const d = await r.json();
+            render(d.results);
+        }
 
-        window.scrollTo({top: 0, behavior: 'smooth'});
-    }
+        function render(movies) {
+            const disp = document.getElementById('display');
+            if(!movies || movies.length === 0) { disp.innerHTML = "Nahi mila. Try again."; return; }
+            disp.innerHTML = movies.map(m => `
+                <div class="card" onclick="play('${m.id}', '${m.title.replace(/'/g, "")}')">
+                    <div class="tag">HINDI</div>
+                    <img src="https://image.tmdb.org/t/p/w300${m.poster_path}" onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
+                    <p>${m.title}</p>
+                </div>
+            `).join('');
+        }
 
-    function closeVideo() {
-        document.getElementById('player-box').style.display = 'none';
-        document.getElementById('video-frame').src = "";
-    }
+        async function play(id, title) {
+            const box = document.getElementById('player-box');
+            const frame = document.getElementById('v-frame');
+            box.style.display = 'block';
+            document.getElementById('p-title').innerText = "Watching: " + title;
+            
+            // Fetch IMDb ID for better source matching
+            const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${KEY}`);
+            const data = await res.json();
+            const imdb = data.imdb_id || id;
+            
+            // Best Source for Multi-Audio (Hindi included)
+            frame.src = `https://multiembed.mov/?video_id=${imdb}`;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
 
-    loadHome();
-</script>
+        function closeVideo() {
+            document.getElementById('player-box').style.display = 'none';
+            document.getElementById('v-frame').src = "";
+        }
+
+        loadHome();
+    </script>
+</body>
+</html>
